@@ -473,3 +473,8 @@ h4 { font-size: var(--text-lg);  }
 .flex-center    { display: flex; align-items: center; justify-content: center; }
 .flex-between   { display: flex; align-items: center; justify-content: space-between; }
 .grid-auto-fit  { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-5); }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
