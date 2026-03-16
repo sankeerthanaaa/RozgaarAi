@@ -1,16 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
+import HomePage        from './pages/HomePage'
+import ATSPage         from './pages/ATSPage'
+import InterviewPage   from './pages/InterviewPage'
+import DashboardPage   from './pages/DashboardPage'
+import LoginPage       from './pages/LoginPage'
+import RegisterPage    from './pages/RegisterPage'
+import ProtectedRoute  from './components/layout/ProtectedRoute'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <div> App
-        </div> </>
+    <BrowserRouter>
+      <Toaster position="top-right" />
+      <Routes>
+        <Route path="/"          element={<HomePage />} />
+        <Route path="/ats"       element={<ATSPage />} />
+        <Route path="/interview" element={<InterviewPage />} />
+        <Route path="/login"     element={<LoginPage />} />
+        <Route path="/register"  element={<RegisterPage />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        } />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App
