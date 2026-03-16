@@ -1,9 +1,3 @@
-import React from 'react'
-
-function InterviewPage() {
-  return (
-    <div>InterviewPage</div>
-  )
+export default function InterviewPage() {
+  return <div style={{ padding: '2rem', fontFamily: 'var(--font-body)' }}>HomePage — coming Day 1 PM</div>
 }
-
-export default InterviewPage
