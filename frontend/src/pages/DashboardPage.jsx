@@ -1,9 +1,3 @@
-import React from 'react'
-
-function DashboardPage() {
-  return (
-    <div>DashboardPage</div>
-  )
+export default function DashboardPage() {
+  return <div style={{ padding: '2rem', fontFamily: 'var(--font-body)' }}>HomePage — coming Day 1 PM</div>
 }
-
-export default DashboardPage
