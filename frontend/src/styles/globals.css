@@ -61,8 +61,8 @@
   --font-display:           'Sora', sans-serif;       /* headings, hero */
   --font-body:              'DM Sans', sans-serif;    /* body, UI labels */
 
-  --text-xs:    11px;
-  --text-sm:    13px;
+  --text-xs:    13px;
+  --text-sm:    14px;
   --text-base:  15px;
   --text-md:    17px;
   --text-lg:    20px;
@@ -180,7 +180,6 @@ h4 { font-size: var(--text-lg);  }
 }
 
 .section { padding-block: var(--space-20); }
-
 /* ── Button system ───────────────────────────────────────── */
 .btn {
   display:         inline-flex;
@@ -201,19 +200,17 @@ h4 { font-size: var(--text-lg);  }
 }
 .btn:active { transform: scale(0.97); }
 
-/* Primary */
 .btn-primary {
   background:  var(--color-primary);
-  color:       var(--color-text-on-purple);
+  color:       #fff;
   padding:     10px 24px;
   box-shadow:  var(--shadow-md);
 }
 .btn-primary:hover {
-  background: var(--color-primary-light);
-  box-shadow: var(--shadow-lg);
+  background:  var(--color-primary-light);
+  box-shadow:  var(--shadow-lg);
 }
 
-/* Secondary / outlined */
 .btn-secondary {
   background:  var(--color-primary-subtle);
   color:       var(--color-primary);
@@ -221,10 +218,9 @@ h4 { font-size: var(--text-lg);  }
   padding:     10px 24px;
 }
 .btn-secondary:hover {
-  background: var(--color-accent-light);
+  background:  var(--color-accent-light);
 }
 
-/* Ghost */
 .btn-ghost {
   background:  transparent;
   color:       var(--color-text-secondary);
@@ -236,18 +232,15 @@ h4 { font-size: var(--text-lg);  }
   color:        var(--color-text-primary);
 }
 
-/* Dark pill (like "Join Us") */
 .btn-dark {
-  background: var(--color-text-primary);
-  color:      #fff;
-  padding:    10px 24px;
+  background:  var(--color-text-primary);
+  color:       #fff;
+  padding:     10px 24px;
 }
 .btn-dark:hover { background: #2d2d50; }
 
-/* Sizes */
-.btn-sm { font-size: var(--text-xs); padding: 7px 16px; }
-.btn-lg { font-size: var(--text-md); padding: 14px 32px; }
-
+.btn-sm { font-size: var(--text-xs);  padding: 7px 16px;  }
+.btn-lg { font-size: var(--text-md);  padding: 14px 32px; }
 /* ── Card system ─────────────────────────────────────────── */
 .card {
   background:    var(--color-bg-surface);
