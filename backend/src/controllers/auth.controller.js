@@ -1,14 +1,13 @@
 const User = require("../models/User.model");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-  sendRefreshTokenCookie,
-  hashPassword,
-  comparePassword,
-  verifyRefreshToken,
-} = require("../services/auth.service");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
-// ─── POST /api/auth/register ──────────────────────────────────────────────────
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
+};
+
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -22,41 +21,34 @@ const register = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({
+      return res.status(400).json({
         success: false,
-        message: "User with this email already exists",
+        message: "User already exists with this email",
       });
     }
 
-    const hashedPassword = await hashPassword(password);
-
-    const user = await User.create({ name, email, password: hashedPassword });
-
-    const accessToken  = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    sendRefreshTokenCookie(res, refreshToken);
+    const user = await User.create({ name, email, password });
+    const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
       message: "Account created successfully",
-      accessToken,
+      accessToken: token,
       user: {
-        id:    user._id,
-        name:  user.name,
+        id: user._id,
+        name: user.name,
         email: user.email,
       },
     });
   } catch (error) {
     console.error("Register error:", error.message);
-    res.status(500).json({ success: false, message: "Server error during registration" });
+    res.status(500).json({
+      success: false,
+      message: "Server error during registration",
+    });
   }
 };
 
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,108 +60,91 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email, isActive: true }).select("+password +refreshToken");
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
     }
 
-    const isMatch = await comparePassword(password, user.password);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
     }
 
-    const accessToken  = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-
-    user.refreshToken = refreshToken;
-    user.loginCount  += 1;
-    user.lastLogin    = new Date();
-    await user.save();
-
-    sendRefreshTokenCookie(res, refreshToken);
+    const token = generateToken(user._id);
 
     res.status(200).json({
       success: true,
-      message: "Login successful",
-      accessToken,
+      accessToken: token,
       user: {
-        id:        user._id,
-        name:      user.name,
-        email:     user.email,
-        lastLogin: user.lastLogin,
+        id: user._id,
+        name: user.name,
+        email: user.email,
       },
     });
   } catch (error) {
     console.error("Login error:", error.message);
-    res.status(500).json({ success: false, message: "Server error during login" });
+    res.status(500).json({
+      success: false,
+      message: "Server error during login",
+    });
   }
 };
 
-// ─── POST /api/auth/refresh ───────────────────────────────────────────────────
-const refresh = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
-    if (!token) {
-      return res.status(401).json({ success: false, message: "No refresh token provided" });
-    }
-
-    const decoded = verifyRefreshToken(token);
-    const user = await User.findById(decoded.id).select("+refreshToken");
-
-    if (!user || user.refreshToken !== token) {
-      return res.status(401).json({ success: false, message: "Invalid refresh token" });
-    }
-
-    const newAccessToken  = generateAccessToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
-
-    user.refreshToken = newRefreshToken;
-    await user.save();
-
-    sendRefreshTokenCookie(res, newRefreshToken);
-
-    res.status(200).json({ success: true, accessToken: newAccessToken });
-  } catch (error) {
-    res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
-  }
-};
-
-// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
-const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
     res.status(200).json({
       success: true,
-      user: {
-        id:           user._id,
-        name:         user.name,
-        email:        user.email,
-        profilePhoto: user.profilePhoto,
-        loginCount:   user.loginCount,
-        lastLogin:    user.lastLogin,
-        createdAt:    user.createdAt,
-      },
+      data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Get Profile error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
 
-// ─── POST /api/auth/logout ────────────────────────────────────────────────────
-const logout = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
-    if (token) {
-      await User.findOneAndUpdate({ refreshToken: token }, { refreshToken: null });
+    const { name, avatar } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { name, avatar } },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
-    res.clearCookie("refreshToken");
-    res.status(200).json({ success: true, message: "Logged out successfully" });
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error during logout" });
+    console.error("Update Profile error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
 
-module.exports = { register, login, refresh, getMe, logout };
+module.exports = { register, login, getProfile, updateProfile };

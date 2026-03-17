@@ -1,41 +1,104 @@
+const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+require("dotenv").config();
 
-const generateAccessToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_ACCESS_SECRET, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES || "15m",
-  });
-
-const generateRefreshToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES || "7d",
-  });
-
-const sendRefreshTokenCookie = (res, token) => {
-  res.cookie("refreshToken", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 };
 
-const hashPassword = async (password) => {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
+const register = async (name, email, password) => {
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new Error("User already exists with this email");
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+    });
+
+    const token = generateToken(user._id);
+
+    return {
+      accessToken: token,
+      message: "Account created successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    };
+  } catch (error) {
+    console.error("Register Service Error:", error);
+    throw error;
+  }
 };
 
-const comparePassword = async (plain, hashed) =>
-  bcrypt.compare(plain, hashed);
+const login = async (email, password) => {
+  try {
+    // Find user and explicitly select password
+    const user = await User.findOne({ email }).select("+password");
+    
+    if (!user) {
+      throw new Error("Invalid email or password");
+    }
 
-const verifyRefreshToken = (token) =>
-  jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    // Compare password
+    const isMatch = await user.comparePassword(password);
+    
+    if (!isMatch) {
+      throw new Error("Invalid email or password");
+    }
 
-module.exports = {
-  generateAccessToken,
-  generateRefreshToken,
-  sendRefreshTokenCookie,
-  hashPassword,
-  comparePassword,
-  verifyRefreshToken,
+    const token = generateToken(user._id);
+
+    return {
+      accessToken: token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    };
+  } catch (error) {
+    console.error("Login Service Error:", error);
+    throw error;
+  }
 };
+
+const getProfile = async (userId) => {
+  try {
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    console.error("Get Profile Service Error:", error);
+    throw error;
+  }
+};
+
+const updateProfile = async (userId, updateData) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    console.error("Update Profile Service Error:", error);
+    throw error;
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile };

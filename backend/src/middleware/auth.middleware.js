@@ -1,7 +1,8 @@
-const jwt  = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User.model");
+require("dotenv").config();
 
-const verifyToken = async (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -12,14 +13,14 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    const token   = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id);
-    if (!user || !user.isActive) {
+    if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User not found or account deactivated.",
+        message: "User not found.",
       });
     }
 
@@ -32,8 +33,11 @@ const verifyToken = async (req, res, next) => {
         message: "Token expired. Please refresh your session.",
       });
     }
-    return res.status(401).json({ success: false, message: "Invalid token." });
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token.",
+    });
   }
 };
 
-module.exports = verifyToken;
+module.exports = { protect };
