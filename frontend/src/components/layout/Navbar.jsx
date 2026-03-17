@@ -42,7 +42,7 @@ export default function Navbar() {
           color:       'var(--color-text-primary)',
           textDecoration: 'none',
         }}>
-          ResumeAI
+          RozgaarAI
         </Link>
 
         {/* Nav links */}
