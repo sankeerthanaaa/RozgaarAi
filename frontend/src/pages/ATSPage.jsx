@@ -1,17 +1,15 @@
 // src/pages/ATSPage.jsx
-import { useState } from 'react'
-import SourceToggle   from '../components/ats/SourceToggle'
-import FileDropzone   from '../components/ats/FileDropzone'
-import LinkedInImport from '../components/ats/LinkedInImport'
-import JobRoleSelector from '../components/ats/JobRoleSelector'
-import ScorePanel     from '../components/ats/ScorePanel'
-import SuggestionsPanel from '../components/ats/SuggestionsPanel'  
-import { Skeleton }   from '../components/ui'
+import { useState }         from 'react'
+import { useNavigate }      from 'react-router'
+import { useAuth }          from '../context/AuthContext'
+import toast                from 'react-hot-toast'
+import SourceToggle         from '../components/ats/SourceToggle'
+import ScorePanel           from '../components/ats/ScorePanel'
+import SuggestionsPanel     from '../components/ats/SuggestionsPanel'
 
-// mock result — replace with real API call on Day 4
 const MOCK_RESULT = {
   atsScore: 78,
-  jobRole: 'Software Engineer',
+  jobRole:  'Software Engineer',
   breakdown: [
     { label: 'Keyword match',        value: 82 },
     { label: 'Section completeness', value: 90 },
@@ -20,6 +18,11 @@ const MOCK_RESULT = {
   keywords: {
     present: ['React', 'Node.js', 'TypeScript', 'REST API'],
     missing: ['Docker', 'Kubernetes', 'CI/CD'],
+  },
+  jdMatch: {
+    score:   74,
+    present: ['React', 'Node.js', 'REST API', 'TypeScript'],
+    missing: ['Docker', 'Kubernetes', 'GraphQL'],
   },
   suggestions: [
     {
@@ -40,89 +43,519 @@ const MOCK_RESULT = {
   ],
 }
 
-export default function ATSPage() {
-  const [source,    setSource]    = useState('upload')
-  const [file,      setFile]      = useState(null)
-  const [role,      setRole]      = useState('')
-  const [loading,   setLoading]   = useState(false)
-  const [result,    setResult]    = useState(null)
+const ROLES = [
+  'Software Engineer',    'Frontend Developer',
+  'Backend Developer',    'Data Analyst',
+  'Data Scientist',       'Product Manager',
+  'UX Designer',          'DevOps Engineer',
+  'Full Stack Developer', 'Others',
+]
 
+// centered toast helper — reusable across all actions
+function authToast(message, icon = '🔒') {
+  toast(message, {
+    icon,
+    position: 'top-center',
+    duration: 1500,
+    style: {
+      fontFamily:   'var(--font-body)',
+      fontSize:     'var(--text-sm)',
+      borderRadius: 'var(--radius-md)',
+      border:       '1px solid var(--color-primary-muted)',
+      color:        'var(--color-primary-dark)',
+      background:   'var(--color-primary-subtle)',
+      padding:      'var(--space-3) var(--space-5)',
+    },
+  })
+}
+
+function uploadToast() {
+  toast.error('Upload your resume first', {
+    icon: '📄',
+    position: 'top-center',
+    duration: 2000,
+    style: {
+      fontFamily:   'var(--font-body)',
+      fontSize:     'var(--text-sm)',
+      borderRadius: 'var(--radius-md)',
+      border:       '1px solid var(--color-border)',
+      color:        'var(--color-text-primary)',
+      background:   'var(--color-bg-surface)',
+      padding:      'var(--space-3) var(--space-5)',
+    },
+  })
+}
+
+export default function ATSPage() {
+  const { token } = useAuth()
+  const navigate  = useNavigate()
+
+  const [source,     setSource]     = useState('upload')
+  const [file,       setFile]       = useState(null)
+  const [fileName,   setFileName]   = useState(null)
+  const [role,       setRole]       = useState('')
+  const [customRole, setCustomRole] = useState('')
+  const [jdText,     setJdText]     = useState('')
+  const [linkedInUrl,setLinkedInUrl]= useState('')
+  const [loading,    setLoading]    = useState(false)
+  const [result,     setResult]     = useState(null)
+
+  const activeRole = role === 'Others' ? customRole : role
+
+  // redirect immediately — no delay
+  function redirectToLogin() {
+    navigate('/login', { replace: true })
+  }
+
+  function requireAuth() {
+    if (!token) {
+      authToast('Log in to use this feature')
+      redirectToLogin()
+      return false
+    }
+    return true
+  }
+
+  // ── Upload zone handlers ──────────────────────────────
+  function handleDrop(e) {
+    e.preventDefault()
+    if (!requireAuth()) return
+    const f = e.dataTransfer.files[0]
+    if (f) processFile(f)
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault()
+  }
+
+  function handleDropzoneClick() {
+    if (!requireAuth()) return
+    document.getElementById('resume-file-input').click()
+  }
+
+  function handleFileInputChange(e) {
+    const f = e.target.files[0]
+    if (f) processFile(f)
+  }
+
+  function processFile(f) {
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]
+    if (!allowed.includes(f.type)) {
+      toast.error('Only PDF or DOC/DOCX files allowed', {
+        position: 'top-center',
+        style: {
+          fontFamily:   'var(--font-body)',
+          fontSize:     'var(--text-sm)',
+          borderRadius: 'var(--radius-md)',
+          background:   'var(--color-bg-surface)',
+          color:        'var(--color-text-primary)',
+          border:       '1px solid var(--color-border)',
+        },
+      })
+      return
+    }
+    setFile(f)
+    setFileName(f.name)
+  }
+
+  // ── LinkedIn import handlers ──────────────────────────
+  function handleLinkedInUrlChange(val) {
+    setLinkedInUrl(val)
+  }
+
+  function handleLinkedInImport() {
+    if (!requireAuth()) return
+    console.log('linkedin import:', linkedInUrl)
+    // swap with linkedInService.import(linkedInUrl) on Day 3
+  }
+
+  // ── Role / JD handlers ───────────────────────────────
+  function handleRoleChange(val) {
+    if (!requireAuth()) return
+    setRole(val)
+    setCustomRole('')
+  }
+
+  function handleCustomRoleChange(val) {
+    if (!requireAuth()) return
+    setCustomRole(val)
+  }
+
+  function handleJdChange(val) {
+    if (!requireAuth()) return
+    setJdText(val)
+  }
+
+  function handleSourceChange(val) {
+    if (!requireAuth()) return
+    setSource(val)
+    setFile(null)
+    setFileName(null)
+  }
+
+  // ── Analyze ──────────────────────────────────────────
   async function handleAnalyze() {
-    if (!file && source === 'upload') return
+    if (!requireAuth()) return
+
+    if (!file && source === 'upload') {
+      uploadToast()
+      return
+    }
+
     setLoading(true)
-    // simulate API delay — swap with resumeService.analyze() on Day 4
+    // swap with resumeService.analyze({ file, role: activeRole, jdText }) on Day 4
     await new Promise(r => setTimeout(r, 1500))
-    setResult(MOCK_RESULT)
+    setResult({ ...MOCK_RESULT, jobRole: activeRole || 'General' })
     setLoading(false)
   }
 
   return (
-    <div style={{
-      maxWidth: 'var(--container-max)',
-      margin: '0 auto',
-      padding: 'var(--space-8) var(--container-pad)',
-    }}>
+    <div className="container" style={{ paddingBlock: 'var(--space-8)' }}>
 
-      {/* Page header */}
+      {/* ── Page header ── */}
       <div style={{ marginBottom: 'var(--space-6)' }}>
-        <h2 style={{
-          fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)',
-          fontWeight: 'var(--weight-bold)', marginBottom: 'var(--space-1)'
-        }}>
+        <h2 style={{ marginBottom: 'var(--space-1)' }}>
           Check your ATS score
         </h2>
-        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-          Upload your resume or import from LinkedIn to get started
+        <p className="text-secondary" style={{ fontSize: 'var(--text-sm)' }}>
+          Upload your resume, add a job description, and get instant AI analysis
         </p>
       </div>
 
-      {/* Toggle */}
+      {/* ── Source toggle ── */}
       <div style={{ marginBottom: 'var(--space-5)' }}>
-        <SourceToggle active={source} onChange={setSource} />
+        <SourceToggle active={source} onChange={handleSourceChange} />
       </div>
 
-      {/* Upload area */}
-      <div style={{ marginBottom: 'var(--space-5)' }}>
-        {source === 'upload'
-          ? <FileDropzone onFileSelect={setFile} />
-          : <LinkedInImport onImport={url => console.log('import:', url)} />
-        }
+      {/* ── Upload zone (inline — no FileDropzone import) ── */}
+      {source === 'upload' && (
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <div
+            className="dropzone"
+            onClick={handleDropzoneClick}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            {/* hidden file input */}
+            <input
+              id="resume-file-input"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              style={{ display: 'none' }}
+              onChange={handleFileInputChange}
+            />
+
+            <svg
+              width="36" height="36" viewBox="0 0 36 36" fill="none"
+              style={{ margin: '0 auto var(--space-3)' }}
+            >
+              <rect width="36" height="36" rx="10" fill="var(--color-primary-subtle)"/>
+              <path d="M18 24v-9M15 18l3-3 3 3"
+                stroke="var(--color-primary)" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 27h12"
+                stroke="var(--color-primary)" strokeWidth="1.5"
+                strokeLinecap="round" opacity=".4"/>
+            </svg>
+
+            {fileName ? (
+              <>
+                <p style={{
+                  fontSize:   'var(--text-sm)',
+                  fontWeight: 'var(--weight-medium)',
+                  color:      'var(--color-primary)',
+                  marginBottom:'var(--space-1)',
+                }}>
+                  {fileName}
+                </p>
+                <p className="text-tertiary" style={{ fontSize: 'var(--text-xs)' }}>
+                  Click to change file
+                </p>
+              </>
+            ) : (
+              <>
+                <p style={{
+                  fontSize:    'var(--text-sm)',
+                  fontWeight:  'var(--weight-medium)',
+                  color:       'var(--color-text-primary)',
+                  marginBottom:'var(--space-1)',
+                }}>
+                  Drag &amp; drop your resume here
+                </p>
+                <p className="text-tertiary" style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-3)' }}>
+                  PDF or DOC · max 5MB
+                </p>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={e => { e.stopPropagation(); handleDropzoneClick() }}
+                >
+                  Browse files
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── LinkedIn import (inline — no LinkedInImport import) ── */}
+      {source === 'linkedin' && (
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{
+            background:   'var(--color-bg-surface-2)',
+            border:       '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-xl)',
+            padding:      'var(--space-8)',
+            textAlign:    'center',
+          }}>
+            <p style={{
+              fontSize:     'var(--text-sm)',
+              fontWeight:   'var(--weight-medium)',
+              color:        'var(--color-text-primary)',
+              marginBottom: 'var(--space-4)',
+            }}>
+              Paste your LinkedIn profile URL
+            </p>
+
+            <div style={{ display: 'flex', gap: 'var(--space-3)', maxWidth: 480, margin: '0 auto' }}>
+              <input
+                className="input"
+                placeholder="https://linkedin.com/in/yourname"
+                value={linkedInUrl}
+                onChange={e => handleLinkedInUrlChange(e.target.value)}
+              />
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleLinkedInImport}
+              >
+                Import
+              </button>
+            </div>
+
+            <p className="text-tertiary" style={{ fontSize: 'var(--text-xs)', marginTop: 'var(--space-3)' }}>
+              Or upload your LinkedIn PDF export below
+            </p>
+
+            {/* LinkedIn PDF upload — auth guarded via handleDropzoneClick */}
+            <div
+              className="dropzone"
+              style={{ marginTop: 'var(--space-4)', padding: 'var(--space-5)' }}
+              onClick={handleDropzoneClick}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+            >
+              <input
+                id="resume-file-input"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                style={{ display: 'none' }}
+                onChange={handleFileInputChange}
+              />
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+                {fileName ? fileName : 'Drop LinkedIn PDF export here'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Role + JD card ── */}
+      <div className="card" style={{ marginBottom: 'var(--space-8)' }}>
+
+        {/* Target role row */}
+        <div style={{
+          display:      'flex',
+          alignItems:   'center',
+          flexWrap:     'wrap',
+          gap:          'var(--space-3)',
+          marginBottom: 'var(--space-5)',
+        }}>
+          <label style={{
+            fontSize:   'var(--text-sm)',
+            fontWeight: 'var(--weight-medium)',
+            color:      'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}>
+            Target role
+          </label>
+
+          <select
+            value={role}
+            onChange={e => handleRoleChange(e.target.value)}
+            className="input"
+            style={{ width: 220, height: 44, cursor: 'pointer' }}
+          >
+            <option value="">Select a role</option>
+            {ROLES.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+
+          {role === 'Others' && (
+            <input
+              className="input"
+              style={{ width: 220 }}
+              placeholder="Type your job role..."
+              value={customRole}
+              onChange={e => handleCustomRoleChange(e.target.value)}
+              autoFocus
+            />
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          height:       1,
+          background:   'var(--color-border-surface)',
+          marginBottom: 'var(--space-5)',
+        }} />
+
+        {/* Job description */}
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <label style={{
+            display:      'block',
+            fontSize:     'var(--text-sm)',
+            fontWeight:   'var(--weight-medium)',
+            color:        'var(--color-text-secondary)',
+            marginBottom: 'var(--space-2)',
+          }}>
+            Job description
+            <span
+              className="text-tertiary"
+              style={{
+                fontSize:   'var(--text-xs)',
+                fontWeight: 'var(--weight-regular)',
+                marginLeft: 'var(--space-2)',
+              }}
+            >
+              optional — paste the JD to get a match score
+            </span>
+          </label>
+
+          <textarea
+            className="input textarea"
+            rows={5}
+            placeholder="Paste the full job description here. We'll compare it against your resume and show you exactly which keywords you're missing..."
+            value={jdText}
+            onChange={e => handleJdChange(e.target.value)}
+          />
+
+          {jdText.trim().length > 0 && (
+            <p className="text-tertiary" style={{ fontSize: 'var(--text-xs)', marginTop: 'var(--space-2)' }}>
+              {jdText.trim().split(/\s+/).length} words · JD match will run automatically
+            </p>
+          )}
+        </div>
+
+        {/* Analyze button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            className="btn btn-primary"
+            onClick={handleAnalyze}
+            disabled={loading}
+          >
+            {loading ? 'Analyzing…' : 'Analyze resume'}
+          </button>
+        </div>
       </div>
 
-      {/* Role + Analyze button row */}
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: 'var(--space-4)',
-        marginBottom: 'var(--space-8)',
-      }}>
-        <JobRoleSelector value={role} onChange={setRole} />
-        <button
-          className="btn btn-primary"
-          onClick={handleAnalyze}
-          disabled={loading || (!file && source === 'upload')}
-        >
-          {loading ? 'Analyzing…' : 'Analyze resume'}
-        </button>
-      </div>
-
-      {/* Results — two column */}
+      {/* ── Results ── */}
       {(loading || result) && (
         <div style={{
-          display: 'grid',
+          display:             'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 'var(--space-6)',
-          alignItems: 'start',
+          gap:                 'var(--space-6)',
+          alignItems:          'start',
         }}>
-          {/* LEFT — FE Dev 1 */}
-          <div>
-            {loading
-              ? <LoadingSkeleton />
-              : <ScorePanel result={result} />
-            }
+
+          {/* LEFT — score + JD match */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            {loading ? <LoadingSkeleton /> : (
+              <>
+                <ScorePanel result={result} />
+
+                {jdText.trim().length > 0 && result.jdMatch && (
+                  <div className="card">
+
+                    <div style={{
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'space-between',
+                      marginBottom:   'var(--space-4)',
+                    }}>
+                      <p style={{
+                        fontSize:   'var(--text-sm)',
+                        fontWeight: 'var(--weight-medium)',
+                        color:      'var(--color-text-primary)',
+                      }}>
+                        JD match score
+                      </p>
+                      <span style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize:   'var(--text-xl)',
+                        fontWeight: 'var(--weight-bold)',
+                        color:      result.jdMatch.score >= 75
+                          ? 'var(--color-success)'
+                          : result.jdMatch.score >= 50
+                          ? 'var(--color-warning)'
+                          : 'var(--color-danger)',
+                      }}>
+                        {result.jdMatch.score}%
+                      </span>
+                    </div>
+
+                    <div className="progress-track" style={{ marginBottom: 'var(--space-4)' }}>
+                      <div
+                        className={`progress-fill ${
+                          result.jdMatch.score >= 75 ? 'success' :
+                          result.jdMatch.score >= 50 ? 'warning' : ''
+                        }`}
+                        style={{ width: `${result.jdMatch.score}%` }}
+                      />
+                    </div>
+
+                    <p style={{
+                      fontSize:     'var(--text-xs)',
+                      fontWeight:   'var(--weight-medium)',
+                      color:        'var(--color-text-primary)',
+                      marginBottom: 'var(--space-2)',
+                    }}>
+                      Keywords present
+                    </p>
+                    <div style={{
+                      display:      'flex',
+                      flexWrap:     'wrap',
+                      gap:          'var(--space-2)',
+                      marginBottom: 'var(--space-4)',
+                    }}>
+                      {result.jdMatch.present.map(k => (
+                        <span key={k} className="badge keyword-pill-present">{k}</span>
+                      ))}
+                    </div>
+
+                    <p style={{
+                      fontSize:     'var(--text-xs)',
+                      fontWeight:   'var(--weight-medium)',
+                      color:        'var(--color-text-primary)',
+                      marginBottom: 'var(--space-2)',
+                    }}>
+                      Missing keywords
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                      {result.jdMatch.missing.map(k => (
+                        <span key={k} className="badge keyword-pill-missing">{k}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
-          {/* RIGHT — FE Dev 2 */}
+          {/* RIGHT — suggestions */}
           <div>
             {loading
               ? <LoadingSkeleton />
@@ -138,9 +571,15 @@ export default function ATSPage() {
 function LoadingSkeleton() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      <Skeleton height="200px" radius="var(--radius-lg)" />
-      <Skeleton height="140px" radius="var(--radius-lg)" />
-      <Skeleton height="100px" radius="var(--radius-lg)" />
+      {[200, 140, 100].map(h => (
+        <div key={h} style={{
+          height:         h,
+          borderRadius:   'var(--radius-lg)',
+          background:     'linear-gradient(90deg, var(--color-accent-light) 25%, var(--color-primary-subtle) 50%, var(--color-accent-light) 75%)',
+          backgroundSize: '200% 100%',
+          animation:      'shimmer 1.4s infinite',
+        }} />
+      ))}
     </div>
   )
 }
