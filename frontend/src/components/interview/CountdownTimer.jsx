@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function CountdownTimer({ duration = 60, onComplete }) {
+export default function CountdownTimer({ duration = 120, onComplete }) {
   const [timeLeft,  setTimeLeft]  = useState(duration)
   const [running,   setRunning]   = useState(false)
   const intervalRef = useRef(null)
