@@ -85,10 +85,10 @@ export default function Navbar() {
                 fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
                 textDecoration: 'none',
               }}>
-                Log in
+                LOG IN
               </Link>
               <Link to="/register" className="btn btn-dark btn-sm">
-                Join Us
+                SIGN UP
               </Link>
             </>
           )}
