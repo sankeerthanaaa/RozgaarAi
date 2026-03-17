@@ -1,8 +1,7 @@
 const Resume = require("../models/Resume.model");
-// ✅ Correct
 const cloudinary = require("../config/cloudinary.js");
-
 const streamifier = require("streamifier");
+const pdfParse = require("pdf-parse");
 
 // ✅ Upload buffer to Cloudinary via stream
 const uploadToCloudinary = (buffer) => {
@@ -10,8 +9,9 @@ const uploadToCloudinary = (buffer) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: "resumes",
-        resource_type: "raw", // ✅ required for PDFs
+        resource_type: "raw",
         format: "pdf",
+        access_mode: "public",
       },
       (error, result) => {
         if (error) reject(error);
@@ -35,22 +35,29 @@ const uploadResume = async (req, res) => {
       });
     }
 
-    // ✅ Upload to Cloudinary
+    // ✅ Step 1 — Upload to Cloudinary
     const cloudinaryResult = await uploadToCloudinary(req.file.buffer);
     console.log("CLOUDINARY URL:", cloudinaryResult.secure_url);
 
-    // ✅ Save to MongoDB
+    // ✅ Step 2 — Extract text from PDF buffer
+    const pdfData = await pdfParse(req.file.buffer);
+    const extractedText = pdfData.text.trim();
+    console.log("PARSED TEXT:", extractedText.substring(0, 200)); // preview first 200 chars
+
+    // ✅ Step 3 — Save to MongoDB with parsedText
     const newResume = await Resume.create({
       user: req.user._id,
       fileName: req.file.originalname,
       fileUrl: cloudinaryResult.secure_url,
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
+      parsedText: extractedText, // ✅ saved here
+      status: "parsed",          // ✅ update status from "uploaded" to "parsed"
     });
 
     res.status(201).json({
       success: true,
-      message: "Resume uploaded successfully ✅",
+      message: "Resume uploaded and text extracted successfully ✅",
       resume: newResume,
     });
 

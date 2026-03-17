@@ -1,6 +1,6 @@
 ### ─── Variables ─────────────────────────────────────────────────────────────
 @baseUrl = http://localhost:5000/api
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YjhmMGMzYjBjNWM3YTUwZjJiOGVlOSIsImlhdCI6MTc3MzczNjM1NiwiZXhwIjoxNzczNzM3MjU2fQ.oejxsecAFpGKbzlqXSfgCY5ISsNaF_J-1tYPsf3FsW4
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YjhmMGMzYjBjNWM3YTUwZjJiOGVlOSIsImlhdCI6MTc3MzczOTkzMiwiZXhwIjoxNzczNzQwODMyfQ.drvhNrer3osCy0jPT7ANT1BieSM9CEqboeNDcvnxqYc
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
