@@ -48,7 +48,7 @@ export default function LoginPage() {
             fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
             marginBottom: 'var(--space-6)'
           }}>
-            Log in to your ResumeAI account
+            Log in to your RozgaarAI account
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)}
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 Password
               </label>
               <input className="input" type="password"
-                placeholder="••••••••" {...register('password')} />
+                placeholder="" {...register('password')} />
               {errors.password && (
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)' }}>
                   {errors.password.message}
