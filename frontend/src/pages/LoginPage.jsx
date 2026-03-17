@@ -72,7 +72,7 @@ export default function LoginPage() {
                 Password
               </label>
               <input className="input" type="password"
-                placeholder="" {...register('password')} />
+                placeholder="Enter your password" {...register('password')} />
               {errors.password && (
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)' }}>
                   {errors.password.message}

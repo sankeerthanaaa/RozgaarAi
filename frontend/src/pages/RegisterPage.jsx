@@ -29,8 +29,8 @@ export default function RegisterPage() {
   const fields = [
     { name: 'name',     label: 'Full name',       type: 'text',     placeholder: 'Your Name' },
     { name: 'email',    label: 'Email',            type: 'email',    placeholder: 'you@email.com' },
-    { name: 'password', label: 'Password',         type: 'password', placeholder: '' },
-    { name: 'confirm',  label: 'Confirm password', type: 'password', placeholder: '' },
+    { name: 'password', label: 'Password',         type: 'password', placeholder: 'Enter your password' },
+    { name: 'confirm',  label: 'Confirm password', type: 'password', placeholder: 'Confirm password' },
   ]
 
   return (
