@@ -7,7 +7,7 @@ const CATEGORY_STYLE = {
   'Gap-based': { bg: 'var(--color-warning-bg)', color: 'var(--color-warning)' },
 }
 
-export default function QuestionCard({ question, index, total, onNext, onPrev }) {
+export default function QuestionCard({ question, index, total, onNext, onPrev, onSkip }) {
   if (!question) return null
   const style = CATEGORY_STYLE[question.category] || CATEGORY_STYLE.Technical
 
@@ -18,9 +18,7 @@ export default function QuestionCard({ question, index, total, onNext, onPrev })
     }}>
 
       {/* Top meta row */}
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{
           padding: '3px 12px', borderRadius: 'var(--radius-full)',
           fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)',
@@ -44,8 +42,9 @@ export default function QuestionCard({ question, index, total, onNext, onPrev })
 
       {/* Timer */}
       <CountdownTimer
-        duration={60}
-        onComplete={() => toast('Time up! Move to the next question.', { icon: '⏱' })}
+        key={question.id}
+        duration={120}
+        onComplete={() => toast('Time up! Answer or skip to continue.', { icon: '⏱' })}
       />
 
       {/* Self-analysis tip */}
@@ -63,21 +62,43 @@ export default function QuestionCard({ question, index, total, onNext, onPrev })
         </p>
         <p style={{
           fontSize: 'var(--text-xs)', color: 'var(--color-warning)',
-          lineHeight: 'var(--line-normal)'
+          lineHeight: 'var(--line-normal)',
         }}>
           {question.tip}
         </p>
       </div>
 
-      {/* Prev / Next */}
+      {/* Navigation row — Prev | Skip | Next */}
       <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-        <button className="btn btn-ghost btn-sm"
-          style={{ flex: 1 }} onClick={onPrev} disabled={index === 0}>
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ flex: 1 }}
+          onClick={onPrev}
+          disabled={index === 0}
+        >
           Previous
         </button>
-        <button className="btn btn-primary btn-sm"
-          style={{ flex: 1 }} onClick={onNext} disabled={index === total - 1}>
-          Next question
+
+        {/* ← new skip button */}
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{
+            flex: 1,
+            borderColor: 'var(--color-warning)',
+            color: 'var(--color-warning)',
+          }}
+          onClick={onSkip}
+        >
+          Skip
+        </button>
+
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ flex: 1 }}
+          onClick={onNext}
+          disabled={index === total - 1}
+        >
+          Next
         </button>
       </div>
     </div>
