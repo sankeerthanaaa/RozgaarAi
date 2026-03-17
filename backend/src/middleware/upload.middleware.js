@@ -23,5 +23,8 @@ const handleUploadError = (err, req, res, next) => {
 
   next();
 };
+const authMiddleware = require("../middleware/auth");
+
+
 
 module.exports = { handleUploadError };
