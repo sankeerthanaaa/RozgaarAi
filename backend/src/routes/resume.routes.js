@@ -1,34 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
 
-const { protect } = require("../middleware/auth.middleware");
+const upload = require("../middleware/upload.middleware");
+const verifyToken = require("../middleware/auth.middleware");
 
-// storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, "resume-" + Date.now() + ".pdf");
-  },
+const { uploadResume } = require("../controllers/resume.controller");
+
+// ✅ Test route
+router.get("/test", (req, res) => {
+  res.send("Resume route working ✅");
 });
 
-const upload = multer({ storage });
-
-// ✅ ONLY THIS ROUTE (safe)
-router.post("/upload", protect, upload.single("resume"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: "No file uploaded",
-    });
-  }
-
-  res.json({
-    success: true,
-    file: req.file.filename,
-  });
-});
+// ✅ Upload route
+router.post("/upload", verifyToken, upload.single("resume"), uploadResume);
 
 module.exports = router;

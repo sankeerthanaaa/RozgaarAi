@@ -1,3 +1,8 @@
+// ✅ FIRST LINE - before everything else
+const dotenv = require("dotenv");
+dotenv.config();
+
+// Now all process.env vars are available for everything below
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");

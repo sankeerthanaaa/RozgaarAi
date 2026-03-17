@@ -2,73 +2,82 @@ const mongoose = require("mongoose");
 
 const ResumeSchema = new mongoose.Schema(
   {
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
     fileName: {
       type: String,
       required: true,
     },
+
     fileUrl: {
       type: String,
       required: true,
     },
-    fileSize: {
-      type: Number,
-    },
-    mimeType: {
-      type: String,
-    },
+
+    fileSize: Number,
+    mimeType: String,
+
     parsedText: {
       type: String,
       default: "",
     },
+
     parsedData: {
-      name: { type: String },
-      email: { type: String },
-      phone: { type: String },
-      location: { type: String },
-      summary: { type: String },
-      skills: [{ type: String }],
+      name: String,
+      email: String,
+      phone: String,
+      location: String,
+      summary: String,
+      skills: { type: [String], default: [] },
+
       experience: [
         {
-          title: { type: String },
-          company: { type: String },
-          startDate: { type: String },
-          endDate: { type: String },
-          description: { type: String },
+          title: String,
+          company: String,
+          startDate: String,
+          endDate: String,
+          description: String,
         },
       ],
+
       education: [
         {
-          school: { type: String },
-          degree: { type: String },
-          field: { type: String },
-          startDate: { type: String },
-          endDate: { type: String },
+          school: String,
+          degree: String,
+          field: String,
+          startDate: String,
+          endDate: String,
         },
       ],
     },
+
     atsScore: {
       type: Number,
       default: 0,
     },
+
     atsResult: {
-      type: Object,
-      default: {},
+      scoreBreakdown: {},
+      keywordsMatched: [String],
+      missingKeywords: [String],
     },
-    suggestions: [{ type: String }],
+
+    suggestions: { type: [String], default: [] },
+
     status: {
       type: String,
       enum: ["uploaded", "parsed", "analyzed"],
       default: "uploaded",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+// 🔥 Important for performance
+ResumeSchema.index({ user: 1 });
 
 module.exports = mongoose.model("Resume", ResumeSchema);
