@@ -16,6 +16,7 @@ const historyRoutes = require("./src/routes/history.routes");
 const jdRoutes = require("./src/routes/jd.routes");
 const interviewRoutes = require("./src/routes/interview.routes");
 const linkedinRoutes = require("./src/routes/linkedin.routes");
+const dashboardRoutes = require("./src/routes/dashboard.routes");
 
 // Middleware
 const { errorHandler, notFound } = require("./src/middleware/errorHandler");
@@ -47,6 +48,7 @@ app.use("/api/history", historyRoutes);
 app.use("/api/jd", jdRoutes);
 app.use("/api/interview", interviewRoutes);
 app.use("/api/linkedin", linkedinRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Error Handler
 app.use(notFound);
