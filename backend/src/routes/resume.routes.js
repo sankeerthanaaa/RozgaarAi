@@ -1,17 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const {
-  uploadResume,
-  getResumes,
-  getResumeById,
-  deleteResume,
-} = require("../controllers/resume.controller");
-const { protect } = require("../middleware/auth.middleware");
-const { upload } = require("../services/fileUpload.service");
 
-router.post("/upload", protect, upload.single("resume"), uploadResume);
-router.get("/", protect, getResumes);
-router.get("/:id", protect, getResumeById);
-router.delete("/:id", protect, deleteResume);
+const upload = require("../middleware/upload.middleware");
+const verifyToken = require("../middleware/auth.middleware");
+
+const { uploadResume } = require("../controllers/resume.controller");
+
+// ✅ Test route
+router.get("/test", (req, res) => {
+  res.send("Resume route working ✅");
+});
+
+// ✅ Upload route
+router.post("/upload", verifyToken, upload.single("resume"), uploadResume);
 
 module.exports = router;
