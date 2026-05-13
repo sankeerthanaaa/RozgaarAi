@@ -11,8 +11,8 @@ const {
 const { protect } = require("../middleware/auth.middleware");
 
 // ✅ DEBUG (remove later)
-console.log("getProfile:", getProfile);
-console.log("protect:", protect);
+// console.log("getProfile:", getProfile);
+// console.log("protect:", protect);
 
 router.post("/register", register);
 router.post("/login", login);

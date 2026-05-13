@@ -1,5 +1,12 @@
 const multer = require("multer");
 
+// Configure multer storage and limits
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
 const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -23,8 +30,5 @@ const handleUploadError = (err, req, res, next) => {
 
   next();
 };
-const authMiddleware = require("../middleware/auth");
 
-
-
-module.exports = { handleUploadError };
+module.exports = { upload, handleUploadError };
