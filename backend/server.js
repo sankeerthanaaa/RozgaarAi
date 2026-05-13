@@ -5,10 +5,10 @@ dotenv.config();
 // Now all process.env vars are available for everything below
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
+//const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 
-dotenv.config();
+
 
 const connectDB = require("./src/config/db");
 
@@ -26,11 +26,13 @@ const dashboardRoutes = require("./src/routes/dashboard.routes");
 // Middleware
 const { errorHandler, notFound } = require("./src/middleware/errorHandler");
 const { apiLimiter } = require("./src/middleware/rateLimiter");
-
 const app = express();
+
+
 app.use("/uploads", express.static("uploads"));
 // Connect to MongoDB
 connectDB();
+
 app.use(cors({
   origin: "http://localhost:5173",  // your Vite frontend port
   credentials: true,

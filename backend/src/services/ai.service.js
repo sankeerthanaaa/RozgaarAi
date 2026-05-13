@@ -1,28 +1,21 @@
-const openai = require("../config/openai");
+const { geminiModel } = require("../config/gemini");
 
 const getAIResponse = async (prompt) => {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert resume analyzer. Always respond in valid JSON format only, no extra text.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-    });
+    const result = await geminiModel.generateContent(prompt);
+    const text = result.response.text();
 
-    const raw = response.choices[0].message.content;
-    const parsed = JSON.parse(raw);
-    return parsed;
+    // Strip markdown code fences if Gemini wraps response in ```json
+    const clean = text.replace(/```json|```/g, "").trim();
+
+    return JSON.parse(clean);
   } catch (error) {
-    console.error("AI Service Error:", error);
+    // Handle JSON parse errors separately
+    if (error instanceof SyntaxError) {
+      console.error("AI Service JSON Parse Error - Raw response was not valid JSON");
+      throw new Error("AI returned invalid JSON. Please try again.");
+    }
+    console.error("AI Service Error:", error.message);
     throw error;
   }
 };

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const upload = require("../middleware/upload.middleware");
-const verifyToken = require("../middleware/auth.middleware");
+const { upload } = require("../middleware/upload.middleware");
+const {protect} = require("../middleware/auth.middleware");
 
 const { uploadResume } = require("../controllers/resume.controller");
 
@@ -12,6 +12,6 @@ router.get("/test", (req, res) => {
 });
 
 // ✅ Upload route
-router.post("/upload", verifyToken, upload.single("resume"), uploadResume);
+router.post("/upload", protect, upload.single("resume"), uploadResume);
 
 module.exports = router;
