@@ -431,26 +431,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Top missing skills */}
-          <div className="card">
-            <p style={{
-              fontSize:      'var(--text-xs)',
-              fontWeight:    'var(--weight-medium)',
-              color:         'var(--color-text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom:  'var(--space-3)',
-            }}>
-              Top missing skills
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-              {['Docker', 'Kubernetes', 'CI/CD', 'GraphQL'].map(skill => (
-                <span key={skill} className="badge keyword-pill-missing">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
+          
 
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
