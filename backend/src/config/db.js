@@ -7,9 +7,13 @@ const connectDB = async () => {
       tls: true,
       tlsAllowInvalidCertificates: true,
     });
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+
+    console.log(" MongoDB Connected Successfully");
+    console.log(` Database: ${conn.connection.name}`);
+    console.log(` Cluster Host: ${conn.connection.host}`);
+
   } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
+    console.error(` MongoDB Connection Error: ${error.message}`);
     process.exit(1);
   }
 };
